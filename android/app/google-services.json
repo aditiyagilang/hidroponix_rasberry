@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "555192082112",
+    "project_id": "hydroponix-1b993",
+    "storage_bucket": "hydroponix-1b993.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:555192082112:android:fe1cdff75a980971ac1725",
+        "android_client_info": {
+          "package_name": "com.example.hydroponx"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCAT_eWp5xfL3dOtFt8XJfgGo7q4nE2sxA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
