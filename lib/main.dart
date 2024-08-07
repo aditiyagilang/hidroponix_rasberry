@@ -1,11 +1,27 @@
+import 'dart:io';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:hydroponx/splashscreen.dart';
 import 'package:hydroponx/statusPage.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+
+  Platform.isAndroid
+      ? await Firebase.initializeApp(
+          options: FirebaseOptions(
+            apiKey: 'AIzaSyCAT_eWp5xfL3dOtFt8XJfgGo7q4nE2sxA',
+            appId: '1:555192082112:android:fe1cdff75a980971ac1725',
+            messagingSenderId: '555192082112',
+            projectId: 'hydroponix-1b993',
+            storageBucket: 'hydroponix-1b993.appspot.com',
+          ),
+        )
+      : await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        );
   runApp(const MyApp());
 }
 

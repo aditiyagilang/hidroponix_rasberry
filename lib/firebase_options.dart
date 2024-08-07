@@ -83,4 +83,5 @@ class DefaultFirebaseOptions {
     authDomain: 'hydroponix-1b993.firebaseapp.com',
     storageBucket: 'hydroponix-1b993.appspot.com',
   );
+
 }

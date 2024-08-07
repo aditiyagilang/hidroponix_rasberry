@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hydroponx/detailStatus.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 class StatusPageScreen extends StatefulWidget {
   @override
@@ -12,13 +12,12 @@ class StatusPageScreen extends StatefulWidget {
 class _StatusPageScreenState extends State<StatusPageScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   bool isLoading = true;
-  List<String> uniqueTitles = [];
-  Map<String, List<Map<String, dynamic>>> groupedData = {};
+  Map<String, dynamic>? latestData;
 
   @override
   void initState() {
     super.initState();
-    fetchData();
+    initializeDateFormatting('id_ID', null).then((_) => fetchData());
   }
 
   Future<void> fetchData() async {
@@ -27,28 +26,21 @@ class _StatusPageScreenState extends State<StatusPageScreen> {
     });
 
     try {
-      QuerySnapshot querySnapshot = await _firestore.collection('plan').get();
-      List<Map<String, dynamic>> collectionData = querySnapshot.docs
-          .map((doc) => doc.data() as Map<String, dynamic>)
-          .toList();
+      QuerySnapshot querySnapshot = await _firestore
+          .collection('plan')
+          .orderBy('timestamp', descending: true)
+          .limit(1)
+          .get();
 
-      // Group data by title
-      Map<String, List<Map<String, dynamic>>> dataMap = {};
-      for (var item in collectionData) {
-        String? title = item['title'] as String?;
-        if (title != null) {
-          if (dataMap.containsKey(title)) {
-            dataMap[title]!.add(item);
-          } else {
-            dataMap[title] = [item];
-            uniqueTitles.add(title);
-          }
-        }
+      if (querySnapshot.docs.isNotEmpty) {
+        setState(() {
+          latestData = querySnapshot.docs.first.data() as Map<String, dynamic>?;
+        });
+      } else {
+        setState(() {
+          latestData = null;
+        });
       }
-
-      setState(() {
-        groupedData = dataMap;
-      });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -88,7 +80,7 @@ class _StatusPageScreenState extends State<StatusPageScreen> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 24,
+                    fontSize: 26,
                     fontFamily: 'Poppins',
                     fontWeight: FontWeight.w700,
                   ),
@@ -98,83 +90,127 @@ class _StatusPageScreenState extends State<StatusPageScreen> {
                 ),
                 isLoading
                     ? CircularProgressIndicator()
-                    : Expanded(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 40),
-                          child: ListView.builder(
-                            itemCount: uniqueTitles.length,
-                            itemBuilder: (context, index) {
-                              String title = uniqueTitles[index];
-                              List<Map<String, dynamic>> items =
-                                  groupedData[title]!;
-                              var data = items.first;
-                              String imageUrl =
-                                  data['image'] ?? 'default_image_url';
-                              String description = data['description'] ?? '';
-                              String location =
-                                  data['location'] ?? 'Unknown location';
-                              Timestamp timestamp =
-                                  data['timestamp'] ?? Timestamp.now();
-                              DateTime date = timestamp.toDate();
-
-                              return InkWell(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          DetailStatusPageScreen(
-                                        title: title,
+                    : latestData != null
+                        ? Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 40),
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 10.0),
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 30, vertical: 40),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(25),
+                                  color: Colors.white,
+                                ),
+                                child: Column(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(10.0),
+                                      child:
+                                          Image.network(latestData!['image']),
+                                    ),
+                                    const SizedBox(
+                                      height: 20,
+                                    ),
+                                    Text(
+                                      latestData!['description'],
+                                      style: const TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 24,
+                                        fontFamily: 'Rubik',
+                                        fontWeight: FontWeight.w900,
                                       ),
                                     ),
-                                  );
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 10.0),
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      Container(
-                                        width: 86,
-                                        height: 86,
-                                        decoration: BoxDecoration(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          color: Colors.white,
-                                          image: DecorationImage(
-                                            image: NetworkImage(imageUrl),
-                                            fit: BoxFit.fill,
-                                          ),
-                                        ),
+                                    Text(
+                                      DateFormat('EEEE, dd MMMM yyyy', 'id_ID')
+                                          .format(latestData!['timestamp']
+                                              .toDate()),
+                                      style: const TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 24,
+                                        fontFamily: 'Rubik',
+                                        fontWeight: FontWeight.w900,
                                       ),
-                                      const SizedBox(
-                                        width: 30,
-                                      ),
-                                      Expanded(
-                                        child: Text(
-                                          title,
-                                          style: const TextStyle(
-                                            color: Color(0xFFB9B2C4),
-                                            fontSize: 16,
-                                            fontFamily: 'Rubik',
-                                            fontWeight: FontWeight.w700,
+                                    ),
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Image.asset("assets/location.png"),
+                                        SizedBox(width: 10),
+                                        Text(
+                                          latestData!['location'],
+                                          style:const TextStyle(
+                                            color: Color(0xFF434E22),
+                                            fontSize: 22,
+                                            fontFamily: 'Poppins',
+                                            fontWeight: FontWeight.w300,
                                             height: 1.5,
                                           ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
-                              );
-                            },
+                              ),
+                            ),
+                          )
+                        : const Text(
+                            'No Data Available',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontFamily: 'Rubik',
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
+              
+                const Spacer(),
+                InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => DetailStatusPageScreen(
+                          title: latestData!['title'] ?? 'No Title',
                         ),
                       ),
-                const SizedBox(
-                  height: 30,
+                    );
+                  },
+                  child: Center(
+                    child: Container(
+                      width: 300,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(25),
+                        color: Colors.white,
+                      ),
+                      child: Row(
+                        children: [
+                          const Spacer(),
+                          Image.asset(
+                            "assets/riwayat.png",
+                            width: 50,
+                          ),
+                          const Spacer(),
+                          const Text(
+                            "Lihat Riwayat",
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 24,
+                              fontFamily: 'Rubik',
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const Spacer()
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
+                const Spacer(),
               ],
             ),
           ),

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:hydroponx/statusPage.dart';
 
+
 class DetailStatusPageScreen extends StatefulWidget {
   final String title;
 
@@ -29,8 +30,8 @@ class _DetailStatusPageScreenState extends State<DetailStatusPageScreen> {
 
     try {
       QuerySnapshot querySnapshot = await _firestore
-          .collection('plan')
-          .where('title', isEqualTo: widget.title)
+         .collection('plan')
+          .orderBy('timestamp', descending: true) 
           .get();
       setState(() {
         collectionData = querySnapshot.docs
@@ -87,7 +88,7 @@ class _DetailStatusPageScreenState extends State<DetailStatusPageScreen> {
                     ),
                     const Spacer(),
                     Text(
-                      widget.title,
+                      "Riwayat",
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white,
